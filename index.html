@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Портфолио Даниила Пивоварова — WEB-разработчик, дизайнер, иллюстратор."
+    />
+    <title>Даниил Пивоваров — Портфолио</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="Даниил Пивоваров — Портфолио" />
+    <meta
+      property="og:description"
+      content="WEB-разработчик приложений. Дизайн, плакаты, вёрстка и разработка — портфолио работ."
+    />
+    <meta property="og:image" content="assets/og-cover.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Даниил Пивоваров — портфолио" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Даниил Пивоваров — Портфолио" />
+    <meta
+      name="twitter:description"
+      content="WEB-разработчик приложений. Дизайн, плакаты, вёрстка и разработка — портфолио работ."
+    />
+    <meta name="twitter:image" content="assets/og-cover.jpg" />
+
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="cursor-glow" aria-hidden="true"></div>
+
+    <header class="header">
+      <div class="header__inner">
+        <a class="header__logo" href="#top">ДП</a>
+        <nav class="header__nav">
+          <a href="#about">Обо мне</a>
+          <a href="#works">Работы</a>
+          <a href="#contact">Контакты</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero__inner">
+          <div class="hero__content">
+            <p class="hero__label reveal">Портфолио · 2026</p>
+            <h1 class="hero__title reveal">
+              <span class="hero__line">Даниил</span>
+              <span class="hero__line hero__line--accent">Пивоваров</span>
+            </h1>
+            <p class="hero__meta reveal">
+              <span>20 лет</span>
+              <span class="hero__dot">·</span>
+              <span>WEB-разработчик приложений</span>
+            </p>
+            <p class="hero__desc reveal">
+              Создаю визуальные истории в Figma, верстаю и программирую —
+              от плаката и брошур до готового сайта и его размещения.
+            </p>
+            <a class="hero__cta reveal" href="#works">
+              Смотреть работы
+              <span aria-hidden="true">↓</span>
+            </a>
+          </div>
+          <div class="hero__photo reveal">
+            <img src="assets/photo.png" alt="Даниил Пивоваров" width="320" height="400" />
+          </div>
+        </div>
+        <div class="hero__marquee" aria-hidden="true">
+          <div class="hero__marquee-track">
+            <span>DESIGN / CODE / POSTER / WEB / FIGMA / PHOTOSHOP /</span>
+            <span>DESIGN / CODE / POSTER / WEB / FIGMA / PHOTOSHOP /</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="about" id="about">
+        <div class="about__grid">
+          <div class="about__intro reveal">
+            <h2 class="section-title">Обо мне</h2>
+            <p>
+              Я завершил обучение на<strong>WEB-разработчика мультимедийных приложений</strong>.
+              Совмещаю дизайн и разработку: от концепции в Figma до деплоя на
+              WordPress или собственном стеке.
+            </p>
+            <p>
+              Работаю с визуалом, типографикой и интерфейсами — люблю, когда
+              проект выглядит цельно и работает без лишнего шума.
+            </p>
+            <p>
+              Сам я люблю эксперементировать с дизайном, создаю плакаты, макеты страниц, стремлюсь становится лучше и изучать что-то новое
+            </p>
+          </div>
+          <div class="about__skills reveal">
+            <h3 class="about__skills-title">Навыки</h3>
+            <div class="skills">
+              <div class="skills__group">
+                <span class="skills__label">Дизайн</span>
+                <ul>
+                  <li>Figma</li>
+                  <li>Adobe Photoshop</li>
+                  <li>Adobe Illustrator</li>
+                </ul>
+              </div>
+              <div class="skills__group">
+                <span class="skills__label">Разработка</span>
+                <ul>
+                  <li>HTML</li>
+                  <li>CSS</li>
+                  <li>PHP</li>
+                  <li>Java</li>
+                </ul>
+              </div>
+              <div class="skills__group">
+                <span class="skills__label">Инструменты</span>
+                <ul>
+                  <li>OSPanel</li>
+                  <li>WordPress</li>
+                  <li>Tilda</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="works" id="works" aria-label="Работы">
+        <div class="works__ambient" aria-hidden="true"></div>
+        <div class="works__layout">
+          <div class="works__header">
+            <div class="works__header-text reveal">
+              <h2 class="section-title section-title--invert">Работы</h2>
+            </div>
+          </div>
+
+          <div class="works__body">
+            <div class="works__slider-wrap">
+              <button
+                class="works__nav works__nav--prev"
+                type="button"
+                aria-label="Предыдущая работа"
+              >
+                ←
+              </button>
+
+              <div
+                class="works__viewport"
+                tabindex="0"
+                role="region"
+                aria-roledescription="carousel"
+                aria-live="polite"
+              >
+                <article class="works__stage">
+                  <button class="works__frame" type="button" aria-label="Открыть работу">
+                    <img src="" alt="" draggable="false" />
+                  </button>
+                </article>
+              </div>
+
+              <button
+                class="works__nav works__nav--next"
+                type="button"
+                aria-label="Следующая работа"
+              >
+                →
+              </button>
+            </div>
+
+            <div class="works__meta reveal">
+              <p class="works__title"></p>
+              <p class="works__category"></p>
+              <div class="works__progress" aria-hidden="true">
+                <span class="works__progress-bar"></span>
+              </div>
+            </div>
+          </div>
+
+          <aside class="works__filters" aria-label="Фильтр работ">
+            <div class="works__filters-list" role="tablist"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="contact" id="contact">
+        <div class="contact__inner reveal">
+          <h2 class="section-title">Связаться</h2>
+          <p class="contact__text">
+            Открыт к проектам, стажировкам и коллаборациям. Напишите — отвечу.
+          </p>
+          <div class="contact__links">
+            <a
+              class="contact__link"
+              href="mailto:melondesignsprod@gmail.com"
+            >
+              <span class="contact__link-label">Почта</span>
+              <span class="contact__link-note">melondesignsprod@gmail.com</span>
+              <span class="contact__link-arrow">↗</span>
+            </a>
+            <a
+              class="contact__link"
+              href="https://rostov.hh.ru/applicant/profile/me?hhtmFrom=main&hhtmFromLabel=header"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="contact__link-label">HeadHunter</span>
+              <span class="contact__link-arrow">↗</span>
+            </a>
+            <a
+              class="contact__link"
+              href="https://t.me/MelonDesignsProd"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="contact__link-label">Telegram</span>
+              <span class="contact__link-note">@MelonDesignsProd</span>
+              <span class="contact__link-arrow">↗</span>
+            </a>
+            <a
+              class="contact__link"
+              href="https://setka.ru/users/019d35bb-439a-7970-9f12-25d52b374adf"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="contact__link-label">Сетка</span>
+              <span class="contact__link-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__inner">
+        <p>© 2026 Даниил Пивоваров</p>
+        <a href="#top">Наверх ↑</a>
+      </div>
+    </footer>
+
+    <div class="lightbox" hidden aria-hidden="true">
+      <button class="lightbox__backdrop" type="button" aria-label="Закрыть"></button>
+      <div class="lightbox__dialog" role="dialog" aria-modal="true" aria-label="Просмотр работы">
+        <button class="lightbox__close" type="button" aria-label="Закрыть">×</button>
+        <img class="lightbox__img" src="" alt="" />
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
