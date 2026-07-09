@@ -6,6 +6,7 @@ const worksStage = document.querySelector(".works__stage");
 const worksImage = document.querySelector(".works__frame img");
 const worksTitle = document.querySelector(".works__title");
 const worksCategory = document.querySelector(".works__category");
+const progressTrack = document.querySelector(".works__progress");
 const progressBar = document.querySelector(".works__progress-bar");
 const prevBtn = document.querySelector(".works__nav--prev");
 const nextBtn = document.querySelector(".works__nav--next");
@@ -182,6 +183,11 @@ function relativeLuminance(r, g, b) {
   return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
 
+function rgbaFromHsl(h, s, l, alpha) {
+  const { r, g, b } = hslToRgb(h, s, l);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function buildThemeFromAccent(hex) {
   const { r, g, b } = hexToRgb(hex);
   const { h, s, l } = rgbToHsl(r, g, b);
@@ -194,9 +200,14 @@ function buildThemeFromAccent(hex) {
         : Math.max(12, l * 0.72);
 
   const bgSaturation = Math.min(Math.max(s, 28), 88);
-  const bg = hslToRgb(h, bgSaturation, bgLightness);
-  const bgHex = rgbToHex(bg.r, bg.g, bg.b);
-  const luminance = relativeLuminance(bg.r, bg.g, bg.b);
+  const shadeLightness = Math.max(bgLightness - 18, 8);
+
+  const main = hslToRgb(h, bgSaturation, bgLightness);
+  const shade = hslToRgb(h, bgSaturation, shadeLightness);
+  const mainHex = rgbToHex(main.r, main.g, main.b);
+  const shadeHex = rgbToHex(shade.r, shade.g, shade.b);
+
+  const luminance = relativeLuminance(main.r, main.g, main.b);
   const textColor = luminance > 0.42 ? "#121212" : "#ffffff";
   const muted =
     textColor === "#ffffff"
@@ -205,13 +216,48 @@ function buildThemeFromAccent(hex) {
 
   return {
     accent: hex,
-    background: bgHex,
+    backgroundStart: mainHex,
+    backgroundEnd: shadeHex,
+    glow: rgbaFromHsl(h, bgSaturation, Math.min(bgLightness + 26, 60), 0.38),
     text: textColor,
     muted,
   };
 }
 
-function extractDominantColorFromImage(image) {
+function buildNeutralTheme(avgLightness) {
+  if (avgLightness >= 52) {
+    return {
+      accent: "#8a8a8a",
+      backgroundStart: "#e4e4e4",
+      backgroundEnd: "#a8a8a8",
+      glow: "rgba(255, 255, 255, 0.28)",
+      text: "#121212",
+      muted: "rgba(18, 18, 18, 0.62)",
+    };
+  }
+
+  if (avgLightness >= 38) {
+    return {
+      accent: "#707070",
+      backgroundStart: "#484848",
+      backgroundEnd: "#2c2c2c",
+      glow: "rgba(200, 200, 200, 0.16)",
+      text: "#ffffff",
+      muted: "rgba(255, 255, 255, 0.68)",
+    };
+  }
+
+  return {
+    accent: "#555555",
+    backgroundStart: "#282828",
+    backgroundEnd: "#121212",
+    glow: "rgba(160, 160, 160, 0.12)",
+    text: "#ffffff",
+    muted: "rgba(255, 255, 255, 0.68)",
+  };
+}
+
+function analyzeImagePalette(image) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d", { willReadFrequently: true });
   const size = 96;
@@ -228,6 +274,12 @@ function extractDominantColorFromImage(image) {
     b: 0,
   }));
 
+  let chromaticWeight = 0;
+  let neutralWeight = 0;
+  let neutralLightnessSum = 0;
+  let saturationSum = 0;
+  let sampleCount = 0;
+
   for (let index = 0; index < data.length; index += 4) {
     const r = data[index];
     const g = data[index + 1];
@@ -236,11 +288,11 @@ function extractDominantColorFromImage(image) {
 
     if (alpha < 120) continue;
 
+    sampleCount += 1;
     const { h, s, l } = rgbToHsl(r, g, b);
+    saturationSum += s;
 
-    if (s < 10) continue;
-    if (l < 4 || l > 98) continue;
-
+    const channelSpread = Math.max(r, g, b) - Math.min(r, g, b);
     let weight = 1;
 
     if (l >= 45 && l <= 88) {
@@ -251,13 +303,34 @@ function extractDominantColorFromImage(image) {
       weight *= 0.35;
     }
 
+    if (s < 14 || channelSpread < 18) {
+      neutralWeight += weight;
+      neutralLightnessSum += l * weight;
+      continue;
+    }
+
     weight *= 0.6 + (s / 100) * 0.6;
+    chromaticWeight += weight;
 
     const bin = Math.min(35, Math.floor(h / 10));
     hueBins[bin].weight += weight;
     hueBins[bin].r += r * weight;
     hueBins[bin].g += g * weight;
     hueBins[bin].b += b * weight;
+  }
+
+  const meanSaturation = sampleCount ? saturationSum / sampleCount : 0;
+  const isNeutral =
+    chromaticWeight === 0 ||
+    chromaticWeight < neutralWeight * 0.2 ||
+    meanSaturation < 12;
+
+  if (isNeutral) {
+    return {
+      isNeutral: true,
+      neutralLightness: neutralWeight > 0 ? neutralLightnessSum / neutralWeight : 32,
+      accent: null,
+    };
   }
 
   let bestIndex = 0;
@@ -276,16 +349,17 @@ function extractDominantColorFromImage(image) {
   }
 
   const bestBin = hueBins[bestIndex];
-
-  if (bestWeight === 0) {
-    return "#ff316b";
-  }
-
-  return rgbToHex(
+  const accent = rgbToHex(
     Math.round(bestBin.r / bestBin.weight),
     Math.round(bestBin.g / bestBin.weight),
     Math.round(bestBin.b / bestBin.weight)
   );
+
+  return {
+    isNeutral: false,
+    neutralLightness: null,
+    accent,
+  };
 }
 
 function waitForImage(image) {
@@ -304,22 +378,30 @@ async function extractDominantColor(src) {
     return colorCache.get(src);
   }
 
-  const color = await new Promise((resolve) => {
+  const analysis = await new Promise((resolve) => {
     const image = new Image();
     image.decoding = "async";
     image.onload = () => {
-      resolve(extractDominantColorFromImage(image));
+      resolve(analyzeImagePalette(image));
     };
-    image.onerror = () => resolve("#ff316b");
+    image.onerror = () =>
+      resolve({
+        isNeutral: true,
+        neutralLightness: 32,
+        accent: null,
+      });
     image.src = src;
   });
 
-  colorCache.set(src, color);
-  return color;
+  colorCache.set(src, analysis);
+  return analysis;
 }
 
 function applyTheme(theme) {
-  worksSection.style.setProperty("--works-bg", theme.background);
+  worksSection.style.setProperty("--works-bg-start", theme.backgroundStart);
+  worksSection.style.setProperty("--works-bg-end", theme.backgroundEnd);
+  worksSection.style.setProperty("--works-glow", theme.glow);
+  worksSection.style.setProperty("--works-accent", theme.accent);
   worksSection.style.setProperty("--works-text", theme.text);
   worksSection.style.setProperty("--works-muted", theme.muted);
 }
@@ -348,14 +430,24 @@ function setStageContent(index) {
   worksTitle.textContent = work.title;
   worksCategory.textContent = work.category;
   progressBar.style.width = `${((index + 1) / filteredWorks.length) * 100}%`;
+
+  if (progressTrack) {
+    progressTrack.setAttribute("aria-valuemax", String(filteredWorks.length));
+    progressTrack.setAttribute("aria-valuenow", String(index + 1));
+  }
 }
 
 async function applySlideTheme(index) {
   await waitForImage(worksImage);
-  const accent = extractDominantColorFromImage(worksImage);
+  const analysis = analyzeImagePalette(worksImage);
   const src = worksImage.currentSrc || worksImage.src;
-  colorCache.set(src, accent);
-  applyTheme(buildThemeFromAccent(accent));
+  colorCache.set(src, analysis);
+
+  const theme = analysis.isNeutral
+    ? buildNeutralTheme(analysis.neutralLightness)
+    : buildThemeFromAccent(analysis.accent);
+
+  applyTheme(theme);
 }
 
 function clearStageClasses() {
@@ -457,6 +549,90 @@ function bindLightbox() {
     if (event.key === "Escape" && !lightbox.hasAttribute("hidden")) {
       closeLightbox();
     }
+  });
+}
+
+function bindProgressScrub() {
+  if (!progressTrack) return;
+
+  let scrubbing = false;
+
+  const indexFromClientX = (clientX) => {
+    const rect = progressTrack.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    return Math.round(ratio * Math.max(filteredWorks.length - 1, 0));
+  };
+
+  const scrubTo = (clientX) => {
+    const nextIndex = indexFromClientX(clientX);
+    if (nextIndex === activeIndex) return;
+    goToSlide(nextIndex, nextIndex > activeIndex ? 1 : -1, false);
+  };
+
+  progressTrack.addEventListener("pointerdown", (event) => {
+    scrubbing = true;
+    progressTrack.classList.add("is-scrubbing");
+    progressTrack.setPointerCapture(event.pointerId);
+    scrubTo(event.clientX);
+  });
+
+  progressTrack.addEventListener("pointermove", (event) => {
+    if (!scrubbing) return;
+    scrubTo(event.clientX);
+  });
+
+  const endScrub = (event) => {
+    if (!scrubbing) return;
+    scrubbing = false;
+    progressTrack.classList.remove("is-scrubbing");
+    if (event?.pointerId !== undefined) {
+      progressTrack.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  progressTrack.addEventListener("pointerup", endScrub);
+  progressTrack.addEventListener("pointercancel", endScrub);
+
+  progressTrack.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stepSlide(-1);
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      stepSlide(1);
+    }
+  });
+}
+
+function bindThemeToggle() {
+  const button = document.querySelector(".header__theme");
+  if (!button) return;
+
+  const applyLabel = () => {
+    const isDark = document.documentElement.dataset.theme === "dark";
+    button.setAttribute("aria-label", isDark ? "Светлая тема" : "Тёмная тема");
+  };
+
+  applyLabel();
+
+  button.addEventListener("click", () => {
+    const isDark = document.documentElement.dataset.theme === "dark";
+    const nextTheme = isDark ? "light" : "dark";
+
+    if (nextTheme === "dark") {
+      document.documentElement.dataset.theme = "dark";
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+
+    try {
+      localStorage.setItem("theme", nextTheme);
+    } catch (error) {
+      /* ignore */
+    }
+
+    applyLabel();
   });
 }
 
@@ -582,6 +758,109 @@ function bindCursorGlow() {
   });
 }
 
+const CONTACT_EMAIL = "melondesignsprod@gmail.com";
+const CONTACT_TELEGRAM = "@MelonDesignsProd";
+const RESUME_FILENAME = "Pivovarov-Daniil-Valerevich.pdf";
+
+let contactToastTimer;
+
+function showContactToast(message) {
+  const toast = document.getElementById("contact-toast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.hidden = false;
+  toast.classList.add("is-visible");
+
+  clearTimeout(contactToastTimer);
+  contactToastTimer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+    window.setTimeout(() => {
+      if (!toast.classList.contains("is-visible")) {
+        toast.hidden = true;
+      }
+    }, 350);
+  }, 2800);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const fallback = document.createElement("textarea");
+    fallback.value = text;
+    fallback.setAttribute("readonly", "");
+    fallback.style.position = "fixed";
+    fallback.style.opacity = "0";
+    document.body.appendChild(fallback);
+    fallback.select();
+    document.execCommand("copy");
+    fallback.remove();
+  }
+}
+
+async function copyContactEmail() {
+  await copyToClipboard(CONTACT_EMAIL);
+  showContactToast("Почта скопирована в буфер обмена");
+}
+
+async function copyContactTelegram() {
+  await copyToClipboard(CONTACT_TELEGRAM);
+  showContactToast("Telegram скопирован в буфер обмена");
+}
+
+function canInlinePdf() {
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  return !isIOS;
+}
+
+function downloadResume(url) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = RESUME_FILENAME;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function openResume(event) {
+  event.preventDefault();
+  const url = event.currentTarget.getAttribute("href");
+  if (!url) return;
+
+  if (canInlinePdf()) {
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      downloadResume(url);
+    }
+    return;
+  }
+
+  downloadResume(url);
+}
+
+function bindContactLinks() {
+  const emailLink = document.querySelector('[data-contact="email"]');
+  emailLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    copyContactEmail();
+  });
+
+  const telegramLink = document.querySelector('[data-contact="telegram"]');
+  telegramLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    copyContactTelegram();
+  });
+
+  const resumeLink = document.querySelector('[data-contact="resume"]');
+  resumeLink?.addEventListener("click", openResume);
+}
+
 function bindAnchorScroll() {
   const headerHeight =
     parseInt(getComputedStyle(document.documentElement).getPropertyValue("--header-h"), 10) || 72;
@@ -601,11 +880,14 @@ function bindAnchorScroll() {
 async function init() {
   buildFilters();
   bindSliderControls();
+  bindProgressScrub();
   bindLightbox();
   bindRevealAnimations();
   bindHeaderTheme();
   bindCursorGlow();
   bindAnchorScroll();
+  bindContactLinks();
+  bindThemeToggle();
 
   setStageContent(activeIndex);
   await applySlideTheme(activeIndex);
